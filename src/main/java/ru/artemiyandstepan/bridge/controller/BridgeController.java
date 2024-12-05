@@ -1,12 +1,16 @@
 package ru.artemiyandstepan.bridge.controller;
 
-import ru.artemiyandstepan.bridge.service.SoapClientService;
 import com.example.soap.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
+import ru.artemiyandstepan.bridge.service.SoapClientService;
+
+import java.util.List;
 
 @RestController
-@RequestMapping("/api")
 @RequiredArgsConstructor
 public class BridgeController {
     private final SoapClientService soapClientService;
@@ -20,11 +24,27 @@ public class BridgeController {
         return soapResponse.getMessage();
     }
 
-    @GetMapping("/loosers")
-    public Object getLoosers() {
-        Object soapRequest = new Object(); // SOAP-запрос для loosers
-        return soapClientService.sendSoapRequest(soapRequest);
+    @PostMapping("/v1/oscar/screenwriters/get-loosers")
+    public ResponseEntity<List<Movie>> getLoosers() {
+        GetLoosersRequest soapRequest = new GetLoosersRequest();
+
+        GetLoosersResponse soapResponse = (GetLoosersResponse) soapClientService.sendSoapRequest(soapRequest);
+
+        List<Movie> responseDto = soapResponse.getMovies().getMovie();
+
+        return ResponseEntity.ok(responseDto);
     }
 
-    // Другие эндпоинты можно добавить аналогично
+    @PostMapping("/v1/oscar/directors/humiliate-by-genre/{genre}")
+    public ResponseEntity<String> humiliateByGenre(
+            @PathVariable String genre
+    ) {
+        HumiliateByGenreRequest soapRequest = new HumiliateByGenreRequest();
+        MovieGenre movieGenre = MovieGenre.valueOf(genre);
+        soapRequest.setGenre(movieGenre);
+
+        HumiliateByGenreResponse soapResponse = (HumiliateByGenreResponse) soapClientService.sendSoapRequest(soapRequest);
+
+        return ResponseEntity.ok(soapResponse.getResult());
+    }
 }
